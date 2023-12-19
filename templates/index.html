@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Form</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+
+        form {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            max-width: 400px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+        }
+
+        input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 16px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        /* Add a style for the error message area */
+        #error-message {
+            color: red;
+            margin-bottom: 16px; /* Adjust the spacing */
+        }
+
+        button {
+            background-color: #4caf50;
+            color: #fff;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Payment Form</h1>
+
+    <form id="paymentForm">
+        <label for="username">Username:</label>
+        <input type="text" id="username" required>
+
+        <label for="email">Email:</label>
+        <input type="email" id="email" required>
+
+        <label for="mobile">Mobile Number:</label>
+        <input type="tel" id="mobile" required><br>
+
+        <label for="age">Age:</label>
+        <input type="number" id="age" required>
+
+        <label for="preferred_batch">Preferred Batch:</label>
+        <select id="preferred_batch" required>
+            <option value="6-7AM">6-7AM</option>
+            <option value="7-8AM">7-8AM</option>
+            <option value="8-9AM">8-9AM</option>
+            <option value="5-6PM">5-6PM</option>
+        </select>
+
+
+        <label for="amount">Amount:</label>
+        <input type="text" id="amount" value="500" readonly required>
+
+        <button type="button" onclick="processPayment()">Process Payment</button>
+
+        
+        <!-- Display error messages here -->
+        <div id="error-message" style="color: red; margin-top: 10px;"></div>
+        
+        <div id="user-payment-details">
+            <!-- The content will be dynamically filled based on the server response -->
+        </div>
+    </form>
+
+    
+
+    <script>
+        function processPayment() {
+            // ... (your existing code)
+        
+            const username = document.getElementById('username').value;
+            const email = document.getElementById('email').value;
+            const mobile = document.getElementById('mobile').value;
+            const age = document.getElementById('age').value;
+            const preferredBatch = document.getElementById('preferred_batch').value;
+            const amount = document.getElementById('amount').value;
+        
+            const data = {
+                username: username,
+                email: email,
+                mobile: mobile,
+                age: parseInt(age),
+                preferred_batch: preferredBatch,
+                amount: parseFloat(amount)
+            };
+        
+            fetch('http://localhost:5000/process_payment', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Failed to process payment. Please check your information and try again.`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Success:', data);
+        
+                // Handle user payment details if available
+                if (data.payment_details) {
+                    const userPaymentDetailsElement = document.getElementById('user-payment-details');
+                    userPaymentDetailsElement.innerHTML = '<h2>User Payment Details</h2>';
+        
+                    data.payment_details.forEach(payment => {
+                        userPaymentDetailsElement.innerHTML += `
+                            <p>Amount: ${payment.amount}, Status: ${payment.status}, Created At: ${payment.created_at}</p>
+                        `;
+                    });
+                }
+        
+                // Reset error message
+                const errorMessageElement = document.getElementById('error-message');
+                errorMessageElement.innerText = '';
+        
+                alert('Payment processed successfully! Status: ' + data.status);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            
+                // Display specific error messages on the website
+                const errorMessageElement = document.getElementById('error-message');
+            
+                if (error.message.toLowerCase() === 'invalid age') {
+                    errorMessageElement.innerText = 'Invalid age. Participants must be between 18 and 65 years old.';
+                } else if (error.message.includes('Invalid preferred batch')) {
+                    errorMessageElement.innerText = 'Invalid preferred batch. Choose from: 6-7AM, 7-8AM, 8-9AM, 5-6PM';
+                } else {
+                    errorMessageElement.innerText = 'An error occurred. Please try again later.';
+                }
+            
+                // Clear user payment details on error
+                const userPaymentDetailsElement = document.getElementById('user-payment-details');
+                userPaymentDetailsElement.innerHTML = '';
+            });
+            
+        }
+        </script>
+        
+        
+
+</body>
+</html>
+
+
+
